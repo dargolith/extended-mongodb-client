@@ -1,0 +1,36 @@
+{
+  "name": "extended-mongodb-client",
+  "version": "0.1.0",
+  "description": "Extended MongoDB Client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src -o index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dargolith/extended-mongodb-client.git"
+  },
+  "author": "Jesper Ahlberg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dargolith/extended-mongodb-client/issues"
+  },
+  "homepage": "https://github.com/dargolith/extended-mongodb-client#readme",
+  "dependencies": {
+    "mongodb": "^3.0.0-rc0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-core": "^6.24.0",
+    "babel-eslint": "^7.2.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.2.2",
+    "blue-tape": "^1.0.0",
+    "eslint": "^3.18.0",
+    "eslint-config-airbnb-base": "^11.1.3",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-node": "^4.2.1"
+  }
+}
