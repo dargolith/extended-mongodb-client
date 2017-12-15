@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel src -o index.js"
+    "build": "babel src -o index.js",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
