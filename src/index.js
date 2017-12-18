@@ -1,4 +1,4 @@
-import dbClient from 'mongodb';
+import MongoClient from 'mongodb';
 
 export default class MongoDb {
   constructor(connectionString, dbName) {
@@ -14,30 +14,50 @@ export default class MongoDb {
     });
   }
 
-  async insertOne(record, collection) {
-    const db = await dbClient.connect(`${this.connectionString}/${this.dbName}`);
-    const rec = await db.collection(collection).insertOne(record);
-    db.close();
+  async insertOne(collection, record) {
+    let dbClient;
+    let db;
+    let rec;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      db = await dbClient.db(this.dbName);
+      rec = await db.collection(collection).insertOne(record);
+    } finally {
+      dbClient.close();
+    }
     return this._idToRid(rec.ops)[0];
   }
 
   async find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
-    const db = await dbClient.connect(`${this.connectionString}/${this.dbName}`);
-    const records = await db
-      .collection(collection)
-      .find(filter, projection)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .toArray();
-    db.close();
-    return this._idToRid(records);
+    let dbClient;
+    let db;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      db = await dbClient.db(this.dbName);
+      const records = await db
+        .collection(collection)
+        .find(filter, projection)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+      return this._idToRid(records);
+    } finally {
+      dbClient.close();
+    }
   }
 
   async deleteMany(collection, filter, options) {
-    const db = await dbClient.connect(`${this.connectionString}/${this.dbName}`);
-    const result = await db.collection(collection).deleteMany(filter, options);
-    db.close();
+    let dbClient;
+    let db;
+    let result;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      db = await dbClient.db(this.dbName);
+      result = await db.collection(collection).deleteMany(filter, options);
+    } finally {
+      dbClient.close();
+    }
     return result.deletedCount || 0;
   }
 }
