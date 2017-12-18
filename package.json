@@ -1,6 +1,6 @@
 {
   "name": "extended-mongodb-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Extended MongoDB Client",
   "main": "index.js",
   "scripts": {
