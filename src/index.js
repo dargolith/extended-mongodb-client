@@ -23,7 +23,7 @@ export default class MongoDb {
       db = await dbClient.db(this.dbName);
       rec = await db.collection(collection).insertOne(record);
     } finally {
-      dbClient.close();
+      if (dbClient) dbClient.close();
     }
     return this._idToRid(rec.ops)[0];
   }
@@ -43,7 +43,7 @@ export default class MongoDb {
         .toArray();
       return this._idToRid(records);
     } finally {
-      dbClient.close();
+      if (dbClient) dbClient.close();
     }
   }
 
@@ -56,7 +56,7 @@ export default class MongoDb {
       db = await dbClient.db(this.dbName);
       result = await db.collection(collection).deleteMany(filter, options);
     } finally {
-      dbClient.close();
+      if (dbClient) dbClient.close();
     }
     return result.deletedCount || 0;
   }
