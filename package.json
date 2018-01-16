@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/dargolith/extended-mongodb-client#readme",
   "dependencies": {
-    "mongodb": "^3.0.0-rc0"
+    "mongodb": "^3.0.1"
   },
   "devDependencies": {
     "babel-cli": "^6.24.0",
