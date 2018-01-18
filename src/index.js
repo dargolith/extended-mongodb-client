@@ -16,11 +16,10 @@ export default class MongoDb {
 
   async insertOne(collection, record) {
     let dbClient;
-    let db;
     let rec;
     try {
       dbClient = await MongoClient.connect(this.connectionString);
-      db = await dbClient.db(this.dbName);
+      const db = await dbClient.db(this.dbName);
       rec = await db.collection(collection).insertOne(record);
     } finally {
       if (dbClient) dbClient.close();
@@ -30,10 +29,9 @@ export default class MongoDb {
 
   async find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
     let dbClient;
-    let db;
     try {
       dbClient = await MongoClient.connect(this.connectionString);
-      db = await dbClient.db(this.dbName);
+      const db = await dbClient.db(this.dbName);
       const records = await db
         .collection(collection)
         .find(filter, projection)
@@ -47,13 +45,25 @@ export default class MongoDb {
     }
   }
 
-  async deleteMany(collection, filter, options) {
+  async updateMany(collection, update, filter = {}, options) {
     let dbClient;
-    let db;
     let result;
     try {
       dbClient = await MongoClient.connect(this.connectionString);
-      db = await dbClient.db(this.dbName);
+      const db = await dbClient.db(this.dbName);
+      result = await db.collection(collection).updateMany(filter, update, options);
+    } finally {
+      if (dbClient) dbClient.close();
+    }
+    return result.modifiedCount;
+  }
+
+  async deleteMany(collection, filter, options) {
+    let dbClient;
+    let result;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      const db = await dbClient.db(this.dbName);
       result = await db.collection(collection).deleteMany(filter, options);
     } finally {
       if (dbClient) dbClient.close();
