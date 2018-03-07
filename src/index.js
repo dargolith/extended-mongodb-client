@@ -70,4 +70,17 @@ export default class MongoDb {
     }
     return result.deletedCount || 0;
   }
+
+  async createIndex(collection, keys, options) {
+    let dbClient;
+    let result;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      const db = await dbClient.db(this.dbName);
+      result = await db.collection(collection).createIndex(keys, options);
+    } finally {
+      if (dbClient) dbClient.close();
+    }
+    return result;
+  }
 }
