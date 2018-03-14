@@ -16,6 +16,7 @@ test('insertOne', async t => {
     testKey2: 'testValue2',
   });
   t.equals(reply.testKey, 'testValue');
+  t.equals(typeof reply.rid, 'string');
 });
 
 test('find', async t => {
@@ -40,6 +41,41 @@ test('updateMany', async t => {
 test('deleteMany', async t => {
   const reply = await db.deleteMany('testCollection', { testKey: 'testValue' });
   t.equals(reply, 1);
+});
+
+test('insertMany', async t => {
+  const recordsToInsert = [
+    {
+      testKey: 'testValue1',
+    },
+    {
+      testKey: 'testValue2',
+    },
+    {
+      testKey: 'testValue3',
+    },
+    {
+      testKey: 'testValue4',
+    },
+    {
+      testKey: 'testValue5',
+    },
+  ];
+  const reply = await db.insertMany('testCollection2', recordsToInsert, {
+    w: 1,
+    j: true,
+    ordered: true,
+  });
+  t.same(Object.keys(reply), Object.keys(recordsToInsert));
+  t.equals(typeof reply[0].rid, 'string');
+
+  // Verify by reading as well
+  const reply2 = await db.find('testCollection2');
+  t.same(Object.keys(reply2), Object.keys(recordsToInsert));
+
+  // Clear up
+  const reply3 = await db.deleteMany('testCollection2');
+  t.equals(5, reply3);
 });
 
 test('createIndex', async t => {

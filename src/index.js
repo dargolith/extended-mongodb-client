@@ -8,7 +8,7 @@ export default class MongoDb {
 
   _idToRid(arr) {
     return arr.map(r => {
-      r.rid = r._id.valueOf();
+      r.rid = r._id.valueOf().toString();
       delete r._id;
       return r;
     });
@@ -25,6 +25,19 @@ export default class MongoDb {
       if (dbClient) dbClient.close();
     }
     return this._idToRid(rec.ops)[0];
+  }
+
+  async insertMany(collection, records, options) {
+    let dbClient;
+    let rec;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      const db = await dbClient.db(this.dbName);
+      rec = await db.collection(collection).insertMany(records, options);
+    } finally {
+      if (dbClient) dbClient.close();
+    }
+    return this._idToRid(rec.ops);
   }
 
   async find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
