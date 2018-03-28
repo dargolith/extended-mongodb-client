@@ -1,4 +1,13 @@
 import MongoClient from 'mongodb';
+import uuidv1 from 'uuid/v1';
+
+function idToRid(arr) {
+  return arr.map(r => {
+    r.rid = r._id.valueOf().toString();
+    delete r._id;
+    return r;
+  });
+}
 
 export default class MongoDb {
   constructor(connectionString, dbName) {
@@ -6,45 +15,37 @@ export default class MongoDb {
     this.dbName = dbName;
   }
 
-  _idToRid(arr) {
-    return arr.map(r => {
-      r.rid = r._id.valueOf().toString();
-      delete r._id;
-      return r;
+  async usingDb(func, dbName) {
+    let dbClient;
+    try {
+      dbClient = await MongoClient.connect(this.connectionString);
+      const db = await dbClient.db(dbName || this.dbName);
+      return await func(db);
+    } finally {
+      if (dbClient) dbClient.close();
+    }
+  }
+
+  dropDatabase(dbName) {
+    return this.usingDb(db => db.dropDatabase(), dbName);
+  }
+
+  insertOne(collection, record) {
+    return this.usingDb(async db => {
+      const rec = await db.collection(collection).insertOne(record);
+      return idToRid(rec.ops)[0];
     });
   }
 
-  async insertOne(collection, record) {
-    let dbClient;
-    let rec;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
-      rec = await db.collection(collection).insertOne(record);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
-    return this._idToRid(rec.ops)[0];
+  insertMany(collection, records, options) {
+    return this.usingDb(async db => {
+      const rec = await db.collection(collection).insertMany(records, options);
+      return idToRid(rec.ops)[0];
+    });
   }
 
-  async insertMany(collection, records, options) {
-    let dbClient;
-    let rec;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
-      rec = await db.collection(collection).insertMany(records, options);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
-    return this._idToRid(rec.ops);
-  }
-
-  async find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
-    let dbClient;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
+  find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
+    return this.usingDb(async db => {
       const records = await db
         .collection(collection)
         .find(filter, projection)
@@ -52,48 +53,73 @@ export default class MongoDb {
         .skip(skip)
         .limit(limit)
         .toArray();
-      return this._idToRid(records);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
+      return idToRid(records);
+    });
   }
 
-  async updateMany(collection, update, filter = {}, options) {
-    let dbClient;
-    let result;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
-      result = await db.collection(collection).updateMany(filter, update, options);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
-    return result.modifiedCount;
+  updateMany(collection, update, filter = {}, options) {
+    return this.usingDb(async db => {
+      const reply = await db.collection(collection).updateMany(filter, update, options);
+      return reply.modifiedCount || 0;
+    });
   }
 
-  async deleteMany(collection, filter, options) {
-    let dbClient;
-    let result;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
-      result = await db.collection(collection).deleteMany(filter, options);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
-    return result.deletedCount || 0;
+  deleteMany(collection, filter, options) {
+    return this.usingDb(async db => {
+      const reply = await db.collection(collection).deleteMany(filter, options);
+      return reply.deletedCount || 0;
+    });
   }
 
-  async createIndex(collection, keys, options) {
-    let dbClient;
-    let result;
-    try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(this.dbName);
-      result = await db.collection(collection).createIndex(keys, options);
-    } finally {
-      if (dbClient) dbClient.close();
-    }
-    return result;
+  createIndex(collection, keys, options) {
+    return this.usingDb(db => db.collection(collection).createIndex(keys, options));
+  }
+
+  async renameCollection(fromCollection, toCollection, options) {
+    return this.usingDb(db => db.renameCollection(fromCollection, toCollection, options));
+  }
+
+  convertToCapped(collection, limit, size, sort) {
+    return this.usingDb(async db => {
+      // Create new collection
+      const tempCollection = `${collection}_temp_${uuidv1()}`;
+      await db.createCollection(tempCollection, { capped: true, size, max: limit });
+
+      // Copy data to new collection
+      const records = await db
+        .collection(tempCollection)
+        .find()
+        .sort(sort)
+        .limit(limit)
+        .toArray();
+      await db.collection(tempCollection).insertMany(records);
+
+      // Delete old collection
+      await db.dropCollection(collection);
+
+      // Rename new collection
+      db.renameCollection(tempCollection, collection);
+    });
+  }
+
+  convertFromCapped(collection) {
+    return this.usingDb(async db => {
+      // Create new collection
+      const tempCollection = `${collection}_temp_${uuidv1()}`;
+      await db.createCollection(tempCollection);
+
+      // Copy data to new collection
+      const records = await db
+        .collection(tempCollection)
+        .find()
+        .toArray();
+      await db.collection(tempCollection).insertMany(records);
+
+      // Delete old collection
+      await db.dropCollection(collection);
+
+      // Rename new collection
+      db.renameCollection(tempCollection, collection);
+    });
   }
 }

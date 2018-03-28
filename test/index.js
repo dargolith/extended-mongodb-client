@@ -4,9 +4,10 @@ import MongoDb from '../src/index';
 // Note: The following tests requires a mongodb instance to run on the default port (27017)
 
 let db;
+const dbName = 'testdb';
 
 test('Create instance', async t => {
-  db = new MongoDb('mongodb://localhost:27017', 'testdb');
+  db = new MongoDb('mongodb://localhost:27017', dbName);
   t.ok(db instanceof MongoDb);
 });
 
@@ -79,9 +80,39 @@ test('insertMany', async t => {
 });
 
 test('createIndex', async t => {
-  const collection = 'testCollection';
+  const collection = 'testCollection3';
   const keys = { property1: -1, property2: 1 };
   const options = { sparse: true };
   const reply = await db.createIndex(collection, keys, options);
   t.equals(typeof reply, 'string');
+});
+
+test('renameCollection', async () => {
+  const fromCollection = 'testCollection4';
+  const toCollection = 'testCollection5';
+  const recordsToInsert = [
+    {
+      testKey: 'testValue1',
+    },
+    {
+      testKey: 'testValue2',
+    },
+    {
+      testKey: 'testValue3',
+    },
+    {
+      testKey: 'testValue4',
+    },
+    {
+      testKey: 'testValue5',
+    },
+  ];
+  await db.insertMany(fromCollection, recordsToInsert);
+  const reply = await db.renameCollection(fromCollection, toCollection);
+  console.log('RENAME REPLY:', reply);
+});
+
+test('dropDatabase', async t => {
+  db.dropDatabase(dbName);
+  t.ok(true);
 });
