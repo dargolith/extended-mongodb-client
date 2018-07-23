@@ -1,5 +1,5 @@
 import MongoClient from 'mongodb';
-import uuidv1 from 'uuid/v1';
+// import uuidv1 from 'uuid/v1';
 
 function idToRid(arr) {
   return arr.map(r => {
@@ -40,7 +40,7 @@ export default class MongoDb {
   insertMany(collection, records, options) {
     return this.usingDb(async db => {
       const rec = await db.collection(collection).insertMany(records, options);
-      return idToRid(rec.ops)[0];
+      return idToRid(rec.ops);
     });
   }
 
@@ -54,6 +54,13 @@ export default class MongoDb {
         .limit(limit)
         .toArray();
       return idToRid(records);
+    });
+  }
+
+  findOne(collection, filter = {}, projection) {
+    return this.usingDb(async db => {
+      const record = await db.collection(collection).findOne(filter, projection);
+      return idToRid([record])[0];
     });
   }
 
@@ -75,51 +82,51 @@ export default class MongoDb {
     return this.usingDb(db => db.collection(collection).createIndex(keys, options));
   }
 
-  async renameCollection(fromCollection, toCollection, options) {
-    return this.usingDb(db => db.renameCollection(fromCollection, toCollection, options));
-  }
-
-  convertToCapped(collection, limit, size, sort) {
-    return this.usingDb(async db => {
-      // Create new collection
-      const tempCollection = `${collection}_temp_${uuidv1()}`;
-      await db.createCollection(tempCollection, { capped: true, size, max: limit });
-
-      // Copy data to new collection
-      const records = await db
-        .collection(tempCollection)
-        .find()
-        .sort(sort)
-        .limit(limit)
-        .toArray();
-      await db.collection(tempCollection).insertMany(records);
-
-      // Delete old collection
-      await db.dropCollection(collection);
-
-      // Rename new collection
-      db.renameCollection(tempCollection, collection);
-    });
-  }
-
-  convertFromCapped(collection) {
-    return this.usingDb(async db => {
-      // Create new collection
-      const tempCollection = `${collection}_temp_${uuidv1()}`;
-      await db.createCollection(tempCollection);
-
-      // Copy data to new collection
-      const records = await db
-        .collection(tempCollection)
-        .find()
-        .toArray();
-      await db.collection(tempCollection).insertMany(records);
-
-      // Delete old collection
-      await db.dropCollection(collection);
-
-      // Rename new collection
-      db.renameCollection(tempCollection, collection);
-    });
-  }
+  // async renameCollection(fromCollection, toCollection, options) {
+  //   return this.usingDb(db => db.renameCollection(fromCollection, toCollection, options));
+  // }
+  //
+  // convertToCapped(collection, limit, size, sort) {
+  //   return this.usingDb(async db => {
+  //     // Create new collection
+  //     const tempCollection = `${collection}_temp_${uuidv1()}`;
+  //     await db.createCollection(tempCollection, { capped: true, size, max: limit });
+  //
+  //     // Copy data to new collection
+  //     const records = await db
+  //       .collection(tempCollection)
+  //       .find()
+  //       .sort(sort)
+  //       .limit(limit)
+  //       .toArray();
+  //     await db.collection(tempCollection).insertMany(records);
+  //
+  //     // Delete old collection
+  //     await db.dropCollection(collection);
+  //
+  //     // Rename new collection
+  //     db.renameCollection(tempCollection, collection);
+  //   });
+  // }
+  //
+  // convertFromCapped(collection) {
+  //   return this.usingDb(async db => {
+  //     // Create new collection
+  //     const tempCollection = `${collection}_temp_${uuidv1()}`;
+  //     await db.createCollection(tempCollection);
+  //
+  //     // Copy data to new collection
+  //     const records = await db
+  //       .collection(tempCollection)
+  //       .find()
+  //       .toArray();
+  //     await db.collection(tempCollection).insertMany(records);
+  //
+  //     // Delete old collection
+  //     await db.dropCollection(collection);
+  //
+  //     // Rename new collection
+  //     db.renameCollection(tempCollection, collection);
+  //   });
+  // }
 }

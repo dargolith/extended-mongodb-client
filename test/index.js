@@ -79,6 +79,17 @@ test('insertMany', async t => {
   t.equals(5, reply3);
 });
 
+test('findOne', async t => {
+  const recordsToInsert = [{ key: 1, test: 0 }, { key: 2, test: 1 }, { key: 3, test: 1 }];
+  await db.insertMany('findOne_testCollection', recordsToInsert, {
+    w: 1,
+    j: true,
+    ordered: true,
+  });
+  const reply = await db.findOne('findOne_testCollection', { test: 1 }, { key: 1 });
+  t.equals(reply.key, 2);
+});
+
 test('createIndex', async t => {
   const collection = 'testCollection3';
   const keys = { property1: -1, property2: 1 };
@@ -87,30 +98,30 @@ test('createIndex', async t => {
   t.equals(typeof reply, 'string');
 });
 
-test('renameCollection', async () => {
-  const fromCollection = 'testCollection4';
-  const toCollection = 'testCollection5';
-  const recordsToInsert = [
-    {
-      testKey: 'testValue1',
-    },
-    {
-      testKey: 'testValue2',
-    },
-    {
-      testKey: 'testValue3',
-    },
-    {
-      testKey: 'testValue4',
-    },
-    {
-      testKey: 'testValue5',
-    },
-  ];
-  await db.insertMany(fromCollection, recordsToInsert);
-  const reply = await db.renameCollection(fromCollection, toCollection);
-  console.log('RENAME REPLY:', reply);
-});
+// test('renameCollection', async () => {
+//   const fromCollection = 'testCollection4';
+//   const toCollection = 'testCollection5';
+//   const recordsToInsert = [
+//     {
+//       testKey: 'testValue1',
+//     },
+//     {
+//       testKey: 'testValue2',
+//     },
+//     {
+//       testKey: 'testValue3',
+//     },
+//     {
+//       testKey: 'testValue4',
+//     },
+//     {
+//       testKey: 'testValue5',
+//     },
+//   ];
+//   await db.insertMany(fromCollection, recordsToInsert);
+//   const reply = await db.renameCollection(fromCollection, toCollection);
+//   console.log('RENAME REPLY:', reply);
+// });
 
 test('dropDatabase', async t => {
   db.dropDatabase(dbName);
