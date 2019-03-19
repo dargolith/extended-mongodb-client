@@ -2,13 +2,12 @@ import MongoClient from 'mongodb';
 import * as R from 'ramda';
 // import uuidv1 from 'uuid/v1';
 
-function idToRid(arr) {
-  return arr.map(r => {
-    r.rid = r._id.valueOf().toString();
-    delete r._id;
-    return r;
-  });
-}
+const idToRid = R.map(obj =>
+  R.compose(
+    R.omit(['_id']),
+    R.assoc('rid', obj._id.toString()),
+  )(obj),
+);
 
 export default class MongoDb {
   constructor(connectionString) {
