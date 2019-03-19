@@ -7,7 +7,8 @@ const idToRid = R.map(obj =>
     R.has('_id'),
     R.compose(
       R.omit(['_id']),
-      R.assoc('rid', obj._id.toString()),
+      R.evolve({ rid: rid => rid.toString() }),
+      R.assoc('rid', obj._id),
     ),
   )(obj),
 );
