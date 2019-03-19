@@ -7,7 +7,7 @@ let db;
 const dbName = 'testdb';
 
 test('Create instance', async t => {
-  db = new MongoDb('mongodb://localhost:27017', dbName);
+  db = new MongoDb(`mongodb://localhost:27017/${dbName}`);
   t.ok(db instanceof MongoDb);
 });
 

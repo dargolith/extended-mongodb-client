@@ -11,16 +11,15 @@ function idToRid(arr) {
 }
 
 export default class MongoDb {
-  constructor(connectionString, dbName) {
+  constructor(connectionString) {
     this.connectionString = connectionString;
-    this.dbName = dbName;
   }
 
-  async usingDb(func, dbName) {
+  async usingDb(func) {
     let dbClient;
     try {
-      dbClient = await MongoClient.connect(this.connectionString);
-      const db = await dbClient.db(dbName || this.dbName);
+      dbClient = await MongoClient.connect(this.connectionString, { useNewUrlParser: true });
+      const db = await dbClient.db();
       return await func(db);
     } finally {
       if (dbClient) dbClient.close();
@@ -45,7 +44,7 @@ export default class MongoDb {
     });
   }
 
-  find(collection, filter = {}, skip = 0, limit = 0, projection = [], sort) {
+  find(collection, filter = {}, skip = 0, limit = 0, projection = {}, sort) {
     // Fix projections, support for both array of properties and mongodb projection object
     if (Array.isArray(projection))
       projection = R.o(R.fromPairs, R.map(key => [key, 1]))(projection);
@@ -58,7 +57,8 @@ export default class MongoDb {
     return this.usingDb(async db => {
       const records = await db
         .collection(collection)
-        .find(filter, projection)
+        .find(filter)
+        .project(projection)
         .sort(sort)
         .skip(skip)
         .limit(limit)
