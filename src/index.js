@@ -1,4 +1,5 @@
 import MongoClient from 'mongodb';
+import * as R from 'ramda';
 // import uuidv1 from 'uuid/v1';
 
 function idToRid(arr) {
@@ -44,7 +45,16 @@ export default class MongoDb {
     });
   }
 
-  find(collection, filter = {}, skip = 0, limit = 0, projection, sort) {
+  find(collection, filter = {}, skip = 0, limit = 0, projection = [], sort) {
+    // Fix projections, support for both array of properties and mongodb projection object
+    if (Array.isArray(projection))
+      projection = R.o(R.fromPairs, R.map(key => [key, 1]))(projection);
+    if (!R.isEmpty(projection) && !R.has('rid')(projection)) projection.rid = 0;
+    if (R.has('rid')(projection)) {
+      projection._id = projection.rid;
+      projection = R.omit(['rid'])(projection);
+    }
+
     return this.usingDb(async db => {
       const records = await db
         .collection(collection)
