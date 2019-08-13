@@ -14,14 +14,15 @@ const idToRid = R.map(obj =>
 );
 
 export default class MongoDb {
-  constructor(connectionString) {
+  constructor(connectionString, options) {
+    this.options = { useNewUrlParser: true, ...options };
     this.connectionString = connectionString;
   }
 
   async usingDb(func) {
     let dbClient;
     try {
-      dbClient = await MongoClient.connect(this.connectionString, { useNewUrlParser: true });
+      dbClient = await MongoClient.connect(this.connectionString, this.options);
       const db = await dbClient.db();
       return await func(db);
     } finally {
