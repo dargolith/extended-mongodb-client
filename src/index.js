@@ -71,22 +71,11 @@ export default class MongoDb {
     });
   }
 
-  count(collection, filter = {}, skip = 0, limit = 0, projection = {}, sort) {
-    if (Array.isArray(projection))
-      projection = R.o(R.fromPairs, R.map(key => [key, 1]))(projection);
-    if (!R.isEmpty(projection) && !R.has('rid')(projection)) projection.rid = 0;
-    if (R.has('rid')(projection)) {
-      projection._id = projection.rid;
-      projection = R.omit(['rid'])(projection);
-    }
+  count(collection, filter = {}) {
     return this.usingDb(async db =>
       db
         .collection(collection)
         .find(filter)
-        .project(projection)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
         .count(),
     );
   }
