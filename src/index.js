@@ -15,7 +15,7 @@ const idToRid = R.map(obj =>
 
 export default class MongoDb {
   constructor(connectionString, options) {
-    this.options = { useNewUrlParser: true, ...options };
+    this.options = { useNewUrlParser: true, useUnifiedTopology: true, ...options };
     this.connectionString = connectionString;
   }
 
@@ -69,6 +69,26 @@ export default class MongoDb {
         .toArray();
       return idToRid(records);
     });
+  }
+
+  count(collection, filter = {}, skip = 0, limit = 0, projection = {}, sort) {
+    if (Array.isArray(projection))
+      projection = R.o(R.fromPairs, R.map(key => [key, 1]))(projection);
+    if (!R.isEmpty(projection) && !R.has('rid')(projection)) projection.rid = 0;
+    if (R.has('rid')(projection)) {
+      projection._id = projection.rid;
+      projection = R.omit(['rid'])(projection);
+    }
+    return this.usingDb(async db =>
+      db
+        .collection(collection)
+        .find(filter)
+        .project(projection)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .count(),
+    );
   }
 
   findOne(collection, filter = {}, projection) {

@@ -2,6 +2,7 @@ import test from 'blue-tape';
 import MongoDb from '../src/index';
 
 // Note: The following tests requires a mongodb instance to run on the default port (27017)
+// Start using docker exposed to local with: docker run -d -p 27017:27017 mongo
 
 let db;
 const dbName = 'testdb';
@@ -23,6 +24,11 @@ test('insertOne', async t => {
 test('find', async t => {
   const reply = await db.find('testCollection', { testKey: 'testValue', testKey2: 'testValue2' });
   t.equals(reply[0].testKey, 'testValue');
+});
+
+test('count', async t => {
+  const reply = await db.count('testCollection', { testKey: 'testValue', testKey2: 'testValue2' });
+  t.equals(reply, 1);
 });
 
 test('updateMany', async t => {
